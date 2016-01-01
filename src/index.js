@@ -1,6 +1,8 @@
-import {test} from '../xi/xi.js';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import Xi from './xi.react.js';
 
-console.log('running 2');
-
-test();
-
+ReactDOM.render(
+    <Xi/>,
+    document.getElementById('xi')
+);

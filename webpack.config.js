@@ -1,8 +1,8 @@
 module.exports = { // jshint ignore:line
-  entry: {app: ["./src/index.js"]},
+  entry: "./src/index.js",
   output: {
     path: __dirname + '/build/', // jshint ignore:line
-    filename: "bundle.js"
+    filename: "main.js"
   },
   module: {
     loaders: [

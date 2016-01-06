@@ -25,7 +25,7 @@ gulp.task('watch', function() {
   gulp.watch('scss/**/*.scss', ['css']);
 });
 
-gulp.task("default", ["webpack:server", "watch"]);
+gulp.task("default", ["webpack:server"]);
 
 gulp.task("build", ["webpack:prod"]);
 

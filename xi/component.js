@@ -1,38 +1,60 @@
 import React from 'react';
+import store from './store.js';
+
 
 export default class Component extends React.Component {
   constructor() {
     super();
-    this.store = xing.dispatcher.getStore();
   }
 
   componentDidMount() {
-    this.listenerId = this.store.onChange(this._handleChange.bind(this));
+    this.listenerId = store.addListener(this._handleChange.bind(this));
   }
 
   componentWillUnmount() {
-    this.store.removeListener(this.listenerId);
+    store.removeListener(this.listenerId);
   }
 
   registerFor(items) {
-    this.keys = Object.keys(items);
-    const transformation = {};
-    for (let key of this.keys) {
-      if (!this.store.get(key, false)) {
-        transformation[key] = items[key];
-      }
+    this.registeredDefaults = items;
+    this.state = this._getStateFromStore();
+  }
+
+  _getStateFromStore() {
+    const state = {};
+    Object.keys(this.registeredDefaults).forEach(namespace => {
+      state[namespace] = {};
+      Object.keys(this.registeredDefaults[namespace]).forEach(key => {
+        state[namespace][key] = store.get(namespace, key, this.registeredDefaults[namespace][key]);
+      });
+    });
+    return state;
+  }
+
+  _getKeys() {
+    const ret = {};
+    if(this.registeredDefaults) {
+      Object.keys(this.registeredDefaults).forEach(namespace => {
+        ret[namespace] = Object.keys(this.registeredDefaults[namespace]);
+      })
     }
-    this.store.transform(transformation);
-    this.state = this.store.getState(this.keys);
+    return ret;
   }
 
   _handleChange(state, keys) {
-    if (this._intersection(keys, this.keys).length > 0) {
-      this.setState(state);
+    if (this._hasChange(keys, this._getKeys())) {
+      this.setState(this._getStateFromStore());
     }
   }
 
-  _intersection(keys1, keys2) {
-    return keys1.filter(key => keys2.indexOf(key) > -1)
+
+  _hasChange(keys1, keys2) {
+    return Object.keys(keys1).filter(namespace => {
+      if (!keys2[namespace]) {
+        return false;
+      } else {
+        return Object.keys(keys1[namespace]).filter(key => keys2[namespace][key] !== undefined).length > 0;
+      }
+    }).length > 0;
   }
 }

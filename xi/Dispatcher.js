@@ -1,69 +1,48 @@
-import {Store} from './store.js';
+import store, { stateTools } from './store.js';
 
-export default class Dispatcher {
-  constructor() {
-    this.store = new Store();
-    this.services = {};
-    this.reducers = {};
-    this.actions = [];
-  }
+const services = {},
+      reducers = {},
+      actions = [];
 
-  /**
-   * registers a reducer
-   *
-   * a reducer is a trandformer for the current state of the application
-   * it retrieves the store object and manipulates it.
-   *
-   * @param actionType
-   * @param reducer a simple function
-   */
+const dispatcher =  {
   addReducer(actionType, reducer) {
-    if (!this.reducers[actionType]) {
-      this.reducers[actionType] = [];
+    if (!reducers[actionType]) {
+      reducers[actionType] = [];
     }
-    this.reducers[actionType].push(reducer);
+    reducers[actionType].push(reducer);
 
-    return this;
-  }
+    return dispatcher;
+  },
 
-  /**
-   * registers a addService
-   *
-   * a service is responsible for (asynchronous) work like fetching data
-   * from the backend
-   *
-   * @param actionType
-   * @param service a simple function
-   */
   addService(actionType, service) {
-    if (!this.services[actionType]) {
-      this.services[actionType] = [];
+    if (!services[actionType]) {
+      services[actionType] = [];
     }
-    this.services[actionType].push(service);
+    services[actionType].push(service);
 
-    return this;
+    return dispatcher;
   }
+};
 
-  getStore() {
-    return this.store;
+
+
+export default dispatcher;
+
+export function dispatch(action) {
+  // push it onto the actions stack
+  actions.push(action);
+
+  // run the responsible service
+  if (services[action.type]) {
+    setTimeout(function() {
+      services[action.type].forEach(service => service(action, dispatch));
+    }.bind(this), 0);
   }
-
-  dispatch(action) {
-    // push it onto the actions stack
-    this.actions.push(action);
-
-    // run the responsible service
-    if (this.services[action.type]) {
-      global.setTimeout(function() {
-        this.services[action.type].map(service => service(action, this));
-      }.bind(this), 0);
-    }
-    if (this.reducers[action.type]) {
-      global.setTimeout(function() {
-        this.reducers[action.type].map(reducer => reducer(action, this.store));
-      }.bind(this), 0);
-    }
-
-    console.log(action.type, action);
+  if (reducers[action.type]) {
+    setTimeout(function() {
+      const newState = reducers[action.type].reduce((prevState, reducer) => reducer(action, stateTools), store.state);
+      store.set(newState);
+    }.bind(this), 0);
   }
 }
+

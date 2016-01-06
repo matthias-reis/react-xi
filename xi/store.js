@@ -1,38 +1,42 @@
-export default class Store {
-  constructor() {
-    this.state = {};
-    this.listeners = [];
+let state = {}, keys = {};
+const listeners = [];
+
+function addListener(cb) {
+  listeners.push(cb);
+  return listeners.length - 1;
+}
+
+
+function removeListener(id) {
+  delete listeners[id];
+}
+
+function get(namespace, key, defaultValue = null) {
+  if (state[namespace] && state[namespace][key]) {
+    return state[namespace][key];
+  } else {
+    return defaultValue;
+  }
+}
+
+function transform(namespace, obj) {
+  const newState = Object.assign({}, state);
+  newState[namespace] = state[namespace] ? Object.assign({}, state[namespace], obj) : Object.assign({}, obj);
+  if(!keys[namespace]) {
+    keys[namespace] = [];
   }
 
-  onChange(cb) {
-    this.listeners.push(cb);
-    return this.listeners.length - 1;
-  }
+  keys[namespace] = keys[namespace].concat(Object.keys(obj));
+  return newState;
+}
 
-  removeListener(id) {
-    delete this.listeners[id];
-  }
+function set(newState) {
+  state = newState;
+  listeners.forEach(listener => listener(state, keys));
+  keys = [];
+}
 
-  getState() {
-    return this.state;
-  }
+const store = {state, get, set, addListener, removeListener};
 
-  get(key, defaultValue = []) {
-    if (this.state[key]) {
-      return this.state[key];
-    } else {
-      return defaultValue;
-    }
-  }
-
-  transform(obj) {
-    this.state = Object.assign({}, this.state, obj);
-    this._triggerChange(Object.keys(obj));
-  }
-
-  _triggerChange(keys) {
-    this.listeners.forEach(function(listener) {
-      listener(this.state, keys);
-    }.bind(this));
-  }
-};
+export const stateTools = {get, transform};
+export default store;
